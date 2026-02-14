@@ -1,0 +1,188 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  CREATOR
+  STUDENT
+  SUPPORT
+  @@map("user_role")
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  @@map("course_status")
+}
+
+enum LessonType {
+  VIDEO
+  TEXT
+  FILE
+  QUIZ
+  LIVE
+  EMBED
+  @@map("lesson_type")
+}
+
+enum VideoProvider {
+  VDOCIPHER
+  MUX
+  CLOUDFLARE
+  BUNNY
+  YOUTUBE
+  VIMEO
+  @@map("video_provider")
+}
+
+enum VideoStatus {
+  PREUPLOAD
+  UPLOADING
+  PROCESSING
+  READY
+  FAILED
+  DELETED
+  @@map("video_status")
+}
+
+model User {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  role         UserRole  @default(STUDENT)
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  fullName     String?   @map("full_name")
+  avatarUrl    String?   @map("avatar_url")
+  phone        String?
+  isVerified   Boolean   @default(false) @map("is_verified")
+  isBlocked    Boolean   @default(false) @map("is_blocked")
+  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz
+  meta         Json      @default("{}")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @default(now()) @map("updated_at") @db.Timestamptz
+  creatorProfile CreatorProfile?
+
+  @@map("users")
+  @@index([role])
+  @@index([createdAt])
+}
+
+model CreatorProfile {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String    @unique @map("user_id") @db.Uuid
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orgId          String?   @map("org_id") @db.Uuid
+  displayName    String    @map("display_name")
+  bio            String?
+  websiteUrl     String?   @map("website_url")
+  socialLinks    Json      @default("{}") @map("social_links")
+  payoutSettings Json      @default("{}") @map("payout_settings")
+  isPublic       Boolean   @default(true) @map("is_public")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @default(now()) @map("updated_at") @db.Timestamptz
+  courses        Course[]
+
+  @@map("creator_profiles")
+  @@index([orgId])
+}
+
+model VideoAsset {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider        VideoProvider
+  providerVideoId String        @map("provider_video_id")
+  status          VideoStatus   @default(PREUPLOAD)
+  title           String?
+  durationSec     Int?          @map("duration_sec")
+  sizeBytes       BigInt?       @map("size_bytes")
+  playbackMeta    Json          @default("{}") @map("playback_meta")
+  uploadMeta      Json          @default("{}") @map("upload_meta")
+  createdBy       String?       @map("created_by") @db.Uuid
+  orgId           String?       @map("org_id") @db.Uuid
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime      @default(now()) @map("updated_at") @db.Timestamptz
+  lessons         Lesson[]
+
+  @@unique([provider, providerVideoId])
+  @@map("video_assets")
+  @@index([status])
+  @@index([orgId])
+}
+
+model Course {
+  id                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  creatorId          String         @map("creator_id") @db.Uuid
+  creator            CreatorProfile @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  orgId              String?        @map("org_id") @db.Uuid
+  title              String
+  slug               String
+  description        String?
+  coverFileId        String?        @map("cover_file_id") @db.Uuid
+  status             CourseStatus   @default(DRAFT)
+  language           String?
+  level              String?
+  tags               String[]       @default([])
+  meta               Json           @default("{}")
+  priceType          String         @map("price_type") // ONE_TIME, SUBSCRIPTION, FREE
+  priceAmount        Int            @default(0) @map("price_amount")
+  currency           String         @default("USD")
+  previewLessonCount Int            @default(1) @map("preview_lesson_count")
+  publishedAt        DateTime?      @map("published_at") @db.Timestamptz
+  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime       @default(now()) @map("updated_at") @db.Timestamptz
+  sections           CourseSection[]
+  lessons            Lesson[]
+
+  @@unique([creatorId, slug])
+  @@map("courses")
+  @@index([creatorId])
+  @@index([status])
+  @@index([orgId])
+}
+
+model CourseSection {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId  String   @map("course_id") @db.Uuid
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title     String
+  orderNo   Int      @map("order_no")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz
+  lessons   Lesson[]
+
+  @@unique([courseId, orderNo])
+  @@map("course_sections")
+  @@index([courseId])
+}
+
+model Lesson {
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId     String        @map("course_id") @db.Uuid
+  course       Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  sectionId    String?       @map("section_id") @db.Uuid
+  section      CourseSection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  title        String
+  type         LessonType
+  orderNo      Int           @map("order_no")
+  isPreview    Boolean       @default(false) @map("is_preview")
+  contentText  String?       @map("content_text")
+  embedUrl     String?       @map("embed_url")
+  fileId       String?       @map("file_id") @db.Uuid
+  videoAssetId String?       @map("video_asset_id") @db.Uuid
+  videoAsset   VideoAsset?   @relation(fields: [videoAssetId], references: [id], onDelete: SetNull)
+  durationSec  Int?          @map("duration_sec")
+  meta         Json          @default("{}")
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime      @default(now()) @map("updated_at") @db.Timestamptz
+
+  @@unique([courseId, orderNo])
+  @@map("lessons")
+  @@index([courseId])
+  @@index([sectionId])
+  @@index([videoAssetId])
+}
