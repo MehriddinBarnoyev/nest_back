@@ -37,10 +37,12 @@ export declare class LessonsService {
             updatedAt: Date;
             orgId: string | null;
             title: string | null;
+            description: string | null;
             status: import("@prisma/client").$Enums.VideoStatus;
             durationSec: number | null;
             provider: import("@prisma/client").$Enums.VideoProvider;
             providerVideoId: string;
+            sourceUrl: string | null;
             sizeBytes: bigint | null;
             playbackMeta: import("@prisma/client/runtime/library").JsonValue;
             uploadMeta: import("@prisma/client/runtime/library").JsonValue;

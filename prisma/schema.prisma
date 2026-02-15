@@ -98,6 +98,8 @@ model VideoAsset {
   providerVideoId String        @map("provider_video_id")
   status          VideoStatus   @default(PREUPLOAD)
   title           String?
+  description     String?       @db.Text
+  sourceUrl       String?       @map("source_url")
   durationSec     Int?          @map("duration_sec")
   sizeBytes       BigInt?       @map("size_bytes")
   playbackMeta    Json          @default("{}") @map("playback_meta")

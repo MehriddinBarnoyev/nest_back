@@ -16,6 +16,7 @@ import { VdoCipherService } from './vdocipher.service';
 import { CreateVideoDto } from './dto/create-video.dto';
 import { UpdateVideoDto } from './dto/update-video.dto';
 import { GetUploadCredentialsDto } from './dto/upload-credentials.dto';
+import { IngestYoutubeDto } from './dto/ingest-youtube.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
@@ -80,6 +81,18 @@ export class VideosController {
         @Body() dto: UpdateVideoDto,
     ) {
         return this.videosService.update(id, dto);
+    }
+
+    @Post('ingest/youtube')
+    @ApiOperation({
+        summary: 'Ingest YouTube video to database',
+        description: 'Save YouTube video URL and description to database. Uses upsert to prevent duplicates based on video ID. Frontend handles preview via iframe.',
+    })
+    ingestYoutube(
+        @Body() dto: IngestYoutubeDto,
+        @CurrentUser('id') userId: string,
+    ) {
+        return this.videosService.ingestYoutube(dto.url, dto.description, userId);
     }
 
     @Delete(':id')

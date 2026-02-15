@@ -20,6 +20,7 @@ const vdocipher_service_1 = require("./vdocipher.service");
 const create_video_dto_1 = require("./dto/create-video.dto");
 const update_video_dto_1 = require("./dto/update-video.dto");
 const upload_credentials_dto_1 = require("./dto/upload-credentials.dto");
+const ingest_youtube_dto_1 = require("./dto/ingest-youtube.dto");
 const roles_decorator_1 = require("../common/decorators/roles.decorator");
 const current_user_decorator_1 = require("../common/decorators/current-user.decorator");
 const client_1 = require("@prisma/client");
@@ -47,6 +48,9 @@ let VideosController = class VideosController {
     }
     update(id, dto) {
         return this.videosService.update(id, dto);
+    }
+    ingestYoutube(dto, userId) {
+        return this.videosService.ingestYoutube(dto.url, dto.description, userId);
     }
     remove(id) {
         return this.videosService.remove(id);
@@ -114,6 +118,18 @@ __decorate([
     __metadata("design:paramtypes", [String, update_video_dto_1.UpdateVideoDto]),
     __metadata("design:returntype", void 0)
 ], VideosController.prototype, "update", null);
+__decorate([
+    (0, common_1.Post)('ingest/youtube'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Ingest YouTube video to database',
+        description: 'Save YouTube video URL and description to database. Uses upsert to prevent duplicates based on video ID. Frontend handles preview via iframe.',
+    }),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, current_user_decorator_1.CurrentUser)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [ingest_youtube_dto_1.IngestYoutubeDto, String]),
+    __metadata("design:returntype", void 0)
+], VideosController.prototype, "ingestYoutube", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Delete video asset' }),

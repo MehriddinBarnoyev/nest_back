@@ -12,6 +12,7 @@ const axios_1 = require("@nestjs/axios");
 const videos_service_1 = require("./videos.service");
 const videos_controller_1 = require("./videos.controller");
 const vdocipher_service_1 = require("./vdocipher.service");
+const youtube_service_1 = require("./youtube.service");
 let VideosModule = class VideosModule {
 };
 exports.VideosModule = VideosModule;
@@ -19,7 +20,7 @@ exports.VideosModule = VideosModule = __decorate([
     (0, common_1.Module)({
         imports: [axios_1.HttpModule],
         controllers: [videos_controller_1.VideosController],
-        providers: [videos_service_1.VideosService, vdocipher_service_1.VdoCipherService],
+        providers: [videos_service_1.VideosService, vdocipher_service_1.VdoCipherService, youtube_service_1.YoutubeService],
         exports: [videos_service_1.VideosService],
     })
 ], VideosModule);

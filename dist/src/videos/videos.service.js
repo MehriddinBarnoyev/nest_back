@@ -12,10 +12,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.VideosService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const youtube_service_1 = require("./youtube.service");
+const client_1 = require("@prisma/client");
 let VideosService = class VideosService {
     prisma;
-    constructor(prisma) {
+    youtubeService;
+    constructor(prisma, youtubeService) {
         this.prisma = prisma;
+        this.youtubeService = youtubeService;
     }
     async create(dto, userId) {
         return await this.prisma.videoAsset.create({
@@ -83,10 +87,49 @@ let VideosService = class VideosService {
             throw new common_1.NotFoundException('Video asset not found');
         }
     }
+    async ingestYoutube(url, description, userId) {
+        const videoId = this.youtubeService.parseVideoId(url);
+        const embedUrl = this.youtubeService.toEmbedUrl(videoId);
+        const videoAsset = await this.prisma.videoAsset.upsert({
+            where: {
+                provider_providerVideoId: {
+                    provider: client_1.VideoProvider.YOUTUBE,
+                    providerVideoId: videoId,
+                },
+            },
+            update: {
+                description: description || null,
+                sourceUrl: url,
+                status: client_1.VideoStatus.READY,
+                playbackMeta: {
+                    embedUrl,
+                    source: 'youtube',
+                },
+                updatedAt: new Date(),
+            },
+            create: {
+                provider: client_1.VideoProvider.YOUTUBE,
+                providerVideoId: videoId,
+                description: description || null,
+                sourceUrl: url,
+                status: client_1.VideoStatus.READY,
+                playbackMeta: {
+                    embedUrl,
+                    source: 'youtube',
+                },
+                createdBy: userId,
+            },
+        });
+        return {
+            success: true,
+            data: videoAsset,
+        };
+    }
 };
 exports.VideosService = VideosService;
 exports.VideosService = VideosService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        youtube_service_1.YoutubeService])
 ], VideosService);
 //# sourceMappingURL=videos.service.js.map
