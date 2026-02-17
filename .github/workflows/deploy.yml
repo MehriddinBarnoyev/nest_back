@@ -7,6 +7,7 @@ on:
 
 jobs:
   deploy:
+    # faqat commit message ichida "deploy service" bo'lsa (manual dispatch ham ishlasin)
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'deploy service')
     runs-on: ubuntu-latest
 
