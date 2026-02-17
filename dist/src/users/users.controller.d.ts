@@ -6,8 +6,8 @@ export declare class UsersController {
     findAll(page?: number, limit?: number, q?: string): Promise<{
         results: {
             id: string;
-            email: string;
             role: import("@prisma/client").$Enums.UserRole;
+            email: string;
             fullName: string | null;
             isVerified: boolean;
             isBlocked: boolean;
@@ -22,8 +22,8 @@ export declare class UsersController {
     }>;
     findOne(id: string): Promise<{
         id: string;
-        email: string;
         role: import("@prisma/client").$Enums.UserRole;
+        email: string;
         fullName: string | null;
         isVerified: boolean;
         isBlocked: boolean;
@@ -44,8 +44,8 @@ export declare class UsersController {
     }>;
     update(id: string, dto: UpdateUserDto): Promise<{
         id: string;
-        email: string;
         role: import("@prisma/client").$Enums.UserRole;
+        email: string;
         fullName: string | null;
         isVerified: boolean;
         isBlocked: boolean;

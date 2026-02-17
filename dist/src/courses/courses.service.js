@@ -11,24 +11,54 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
+var CoursesService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CoursesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const client_1 = require("@prisma/client");
 const slugify_1 = __importDefault(require("slugify"));
-let CoursesService = class CoursesService {
+let CoursesService = CoursesService_1 = class CoursesService {
     prisma;
+    logger = new common_1.Logger(CoursesService_1.name);
     constructor(prisma) {
         this.prisma = prisma;
     }
+    async canAccessCourse(userId, courseId) {
+        const course = await this.prisma.course.findUnique({
+            where: { id: courseId },
+        });
+        if (!course)
+            return false;
+        if (course.visibility === client_1.CourseVisibility.PUBLIC)
+            return true;
+        if (!userId)
+            return false;
+        const entitlement = await this.prisma.entitlement.findUnique({
+            where: {
+                userId_courseId: {
+                    userId,
+                    courseId,
+                },
+            },
+        });
+        if (!entitlement)
+            return false;
+        if (entitlement.activeUntil && entitlement.activeUntil < new Date()) {
+            return false;
+        }
+        return true;
+    }
     async create(userId, dto) {
+        this.logger.debug(`Creating course for user: ${userId}`);
         const creator = await this.prisma.creatorProfile.findUnique({
             where: { userId },
         });
         if (!creator) {
+            this.logger.error(`Creator profile not found for user: ${userId}`);
             throw new common_1.ForbiddenException('You must have a creator profile to create courses');
         }
+        this.logger.debug(`Found creator profile: ${creator.id}`);
         const slug = dto.slug || (0, slugify_1.default)(dto.title, { lower: true, strict: true });
         return await this.prisma.course.create({
             data: {
@@ -36,6 +66,8 @@ let CoursesService = class CoursesService {
                 title: dto.title,
                 slug,
                 description: dto.description,
+                status: dto.status || client_1.CourseStatus.DRAFT,
+                visibility: dto.visibility || client_1.CourseVisibility.PUBLIC,
                 priceType: dto.priceType,
                 priceAmount: dto.priceAmount,
                 currency: dto.currency || 'USD',
@@ -149,8 +181,15 @@ let CoursesService = class CoursesService {
                     orderBy: { orderNo: 'asc' },
                     include: {
                         lessons: {
-                            where: { isPreview: true },
                             orderBy: { orderNo: 'asc' },
+                            select: {
+                                id: true,
+                                title: true,
+                                type: true,
+                                orderNo: true,
+                                isPreview: true,
+                                durationSec: true,
+                            },
                         },
                     },
                 },
@@ -162,12 +201,14 @@ let CoursesService = class CoursesService {
         return course;
     }
     async update(id, userId, userRole, dto) {
+        this.logger.debug(`Updating course ${id} for user ${userId} (${userRole})`);
         const course = await this.prisma.course.findUnique({ where: { id } });
         if (!course)
             throw new common_1.NotFoundException('Course not found');
         if (userRole !== client_1.UserRole.ADMIN) {
             const creator = await this.prisma.creatorProfile.findUnique({ where: { userId } });
             if (!creator || course.creatorId !== creator.id) {
+                this.logger.error(`Access denied for course ${id}. Creator: ${creator?.id}, Course Owner: ${course.creatorId}`);
                 throw new common_1.ForbiddenException('You do not have access to this course');
             }
         }
@@ -193,9 +234,45 @@ let CoursesService = class CoursesService {
         await this.prisma.course.delete({ where: { id } });
         return { success: true };
     }
+    async findMyCourses(userId, page = 1, limit = 10) {
+        const skip = (page - 1) * limit;
+        const where = {
+            entitlements: {
+                some: {
+                    userId,
+                    OR: [
+                        { activeUntil: null },
+                        { activeUntil: { gte: new Date() } },
+                    ],
+                },
+            },
+        };
+        const [results, total] = await Promise.all([
+            this.prisma.course.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { updatedAt: 'desc' },
+                include: {
+                    creator: { select: { displayName: true } },
+                    _count: { select: { lessons: true } },
+                },
+            }),
+            this.prisma.course.count({ where }),
+        ]);
+        return {
+            results,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
+    }
 };
 exports.CoursesService = CoursesService;
-exports.CoursesService = CoursesService = __decorate([
+exports.CoursesService = CoursesService = CoursesService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], CoursesService);

@@ -11,8 +11,12 @@ import { CoursesModule } from './courses/courses.module';
 import { SectionsModule } from './sections/sections.module';
 import { LessonsModule } from './lessons/lessons.module';
 import { VideosModule } from './videos/videos.module';
+import { AccessRequestsModule } from './access-requests/access-requests.module';
+import { InvoicesModule } from './invoices/invoices.module';
+import { PaymentsModule } from './payments/payments.module';
 import { HealthController } from './health.controller';
 import { validate } from './config/env.validation';
+
 
 @Module({
   imports: [
@@ -32,7 +36,11 @@ import { validate } from './config/env.validation';
     SectionsModule,
     LessonsModule,
     VideosModule,
+    AccessRequestsModule,
+    InvoicesModule,
+    PaymentsModule,
   ],
+
   controllers: [AppController, HealthController],
   providers: [AppService],
 })

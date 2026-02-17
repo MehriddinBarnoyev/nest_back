@@ -10,8 +10,8 @@ export declare class AuthService {
         token: string;
         user: {
             id: string;
-            email: string;
             role: import("@prisma/client").$Enums.UserRole;
+            email: string;
             fullName: string | null;
             isVerified: boolean;
         };
@@ -20,8 +20,8 @@ export declare class AuthService {
         token: string;
         user: {
             id: string;
-            email: string;
             role: import("@prisma/client").$Enums.UserRole;
+            email: string;
             fullName: string | null;
             avatarUrl: string | null;
             phone: string | null;

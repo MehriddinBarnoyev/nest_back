@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
+import { CourseStatus, CourseVisibility } from '@prisma/client';
 
 export class CreateCourseDto {
     @ApiProperty({ example: 'NestJS for Advanced Developers' })
@@ -16,6 +17,16 @@ export class CreateCourseDto {
     @IsString()
     @IsOptional()
     description?: string;
+
+    @ApiProperty({ example: CourseStatus.DRAFT, enum: CourseStatus, required: false })
+    @IsEnum(CourseStatus)
+    @IsOptional()
+    status?: CourseStatus;
+
+    @ApiProperty({ example: CourseVisibility.PUBLIC, enum: CourseVisibility, required: false })
+    @IsEnum(CourseVisibility)
+    @IsOptional()
+    visibility?: CourseVisibility;
 
     @ApiProperty({ example: 'ONE_TIME', enum: ['ONE_TIME', 'SUBSCRIPTION', 'FREE'] })
     @IsString()
@@ -36,3 +47,4 @@ export class CreateCourseDto {
     @IsOptional()
     tags?: string[];
 }
+

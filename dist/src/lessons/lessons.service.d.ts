@@ -5,84 +5,199 @@ export declare class LessonsService {
     private prisma;
     constructor(prisma: PrismaService);
     private checkCourseOwner;
-    create(courseId: string, userId: string, userRole: string, dto: CreateLessonDto): Promise<{
-        id: string;
-        meta: import("@prisma/client/runtime/library").JsonValue;
-        createdAt: Date;
-        updatedAt: Date;
-        title: string;
-        orderNo: number;
-        courseId: string;
-        type: import("@prisma/client").$Enums.LessonType;
-        isPreview: boolean;
-        contentText: string | null;
-        embedUrl: string | null;
-        fileId: string | null;
-        durationSec: number | null;
-        sectionId: string | null;
-        videoAssetId: string | null;
-    }>;
-    findAll(courseId: string): Promise<({
-        section: {
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            title: string;
+    private checkVideoOwnership;
+    create(courseId: string, userId: string, userRole: string, dto: CreateLessonDto): Promise<({
+        videos: ({
+            videoAsset: {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                status: import("@prisma/client").$Enums.VideoStatus;
+                orgId: string | null;
+                title: string | null;
+                description: string | null;
+                durationSec: number | null;
+                createdBy: string | null;
+                provider: import("@prisma/client").$Enums.VideoProvider;
+                providerVideoId: string;
+                sourceUrl: string | null;
+                sizeBytes: bigint | null;
+                playbackMeta: import("@prisma/client/runtime/library").JsonValue;
+                uploadMeta: import("@prisma/client/runtime/library").JsonValue;
+            };
+        } & {
             orderNo: number;
-            courseId: string;
-        } | null;
-        videoAsset: {
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            orgId: string | null;
-            title: string | null;
-            description: string | null;
-            status: import("@prisma/client").$Enums.VideoStatus;
-            durationSec: number | null;
-            provider: import("@prisma/client").$Enums.VideoProvider;
-            providerVideoId: string;
-            sourceUrl: string | null;
-            sizeBytes: bigint | null;
-            playbackMeta: import("@prisma/client/runtime/library").JsonValue;
-            uploadMeta: import("@prisma/client/runtime/library").JsonValue;
-            createdBy: string | null;
-        } | null;
+            lessonId: string;
+            videoAssetId: string;
+        })[];
     } & {
         id: string;
         meta: import("@prisma/client/runtime/library").JsonValue;
         createdAt: Date;
         updatedAt: Date;
+        courseId: string;
         title: string;
         orderNo: number;
-        courseId: string;
+        sectionId: string | null;
         type: import("@prisma/client").$Enums.LessonType;
         isPreview: boolean;
         contentText: string | null;
         embedUrl: string | null;
         fileId: string | null;
         durationSec: number | null;
-        sectionId: string | null;
-        videoAssetId: string | null;
-    })[]>;
-    update(id: string, userId: string, userRole: string, dto: UpdateLessonDto): Promise<{
+    }) | null>;
+    findAll(courseId: string): Promise<({
+        section: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            courseId: string;
+            title: string;
+            orderNo: number;
+        } | null;
+        videos: ({
+            videoAsset: {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                status: import("@prisma/client").$Enums.VideoStatus;
+                orgId: string | null;
+                title: string | null;
+                description: string | null;
+                durationSec: number | null;
+                createdBy: string | null;
+                provider: import("@prisma/client").$Enums.VideoProvider;
+                providerVideoId: string;
+                sourceUrl: string | null;
+                sizeBytes: bigint | null;
+                playbackMeta: import("@prisma/client/runtime/library").JsonValue;
+                uploadMeta: import("@prisma/client/runtime/library").JsonValue;
+            };
+        } & {
+            orderNo: number;
+            lessonId: string;
+            videoAssetId: string;
+        })[];
+    } & {
         id: string;
         meta: import("@prisma/client/runtime/library").JsonValue;
         createdAt: Date;
         updatedAt: Date;
+        courseId: string;
         title: string;
         orderNo: number;
-        courseId: string;
+        sectionId: string | null;
         type: import("@prisma/client").$Enums.LessonType;
         isPreview: boolean;
         contentText: string | null;
         embedUrl: string | null;
         fileId: string | null;
         durationSec: number | null;
+    })[]>;
+    update(id: string, userId: string, userRole: string, dto: UpdateLessonDto): Promise<({
+        videos: ({
+            videoAsset: {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                status: import("@prisma/client").$Enums.VideoStatus;
+                orgId: string | null;
+                title: string | null;
+                description: string | null;
+                durationSec: number | null;
+                createdBy: string | null;
+                provider: import("@prisma/client").$Enums.VideoProvider;
+                providerVideoId: string;
+                sourceUrl: string | null;
+                sizeBytes: bigint | null;
+                playbackMeta: import("@prisma/client/runtime/library").JsonValue;
+                uploadMeta: import("@prisma/client/runtime/library").JsonValue;
+            };
+        } & {
+            orderNo: number;
+            lessonId: string;
+            videoAssetId: string;
+        })[];
+    } & {
+        id: string;
+        meta: import("@prisma/client/runtime/library").JsonValue;
+        createdAt: Date;
+        updatedAt: Date;
+        courseId: string;
+        title: string;
+        orderNo: number;
         sectionId: string | null;
-        videoAssetId: string | null;
-    }>;
+        type: import("@prisma/client").$Enums.LessonType;
+        isPreview: boolean;
+        contentText: string | null;
+        embedUrl: string | null;
+        fileId: string | null;
+        durationSec: number | null;
+    }) | null>;
     remove(id: string, userId: string, userRole: string): Promise<{
         success: boolean;
     }>;
+    findOnePublic(id: string, userId: string | null): Promise<{
+        course: {
+            id: string;
+            meta: import("@prisma/client/runtime/library").JsonValue;
+            createdAt: Date;
+            updatedAt: Date;
+            currency: string;
+            status: import("@prisma/client").$Enums.CourseStatus;
+            creatorId: string;
+            orgId: string | null;
+            title: string;
+            slug: string;
+            description: string | null;
+            coverFileId: string | null;
+            visibility: import("@prisma/client").$Enums.CourseVisibility;
+            language: string | null;
+            level: string | null;
+            tags: string[];
+            priceType: string;
+            priceAmount: number;
+            previewLessonCount: number;
+            publishedAt: Date | null;
+        };
+        videos: ({
+            videoAsset: {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                status: import("@prisma/client").$Enums.VideoStatus;
+                orgId: string | null;
+                title: string | null;
+                description: string | null;
+                durationSec: number | null;
+                createdBy: string | null;
+                provider: import("@prisma/client").$Enums.VideoProvider;
+                providerVideoId: string;
+                sourceUrl: string | null;
+                sizeBytes: bigint | null;
+                playbackMeta: import("@prisma/client/runtime/library").JsonValue;
+                uploadMeta: import("@prisma/client/runtime/library").JsonValue;
+            };
+        } & {
+            orderNo: number;
+            lessonId: string;
+            videoAssetId: string;
+        })[];
+    } & {
+        id: string;
+        meta: import("@prisma/client/runtime/library").JsonValue;
+        createdAt: Date;
+        updatedAt: Date;
+        courseId: string;
+        title: string;
+        orderNo: number;
+        sectionId: string | null;
+        type: import("@prisma/client").$Enums.LessonType;
+        isPreview: boolean;
+        contentText: string | null;
+        embedUrl: string | null;
+        fileId: string | null;
+        durationSec: number | null;
+    }>;
+    private canAccessCourse;
 }

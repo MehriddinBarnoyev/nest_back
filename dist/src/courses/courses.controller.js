@@ -42,6 +42,9 @@ let CoursesController = class CoursesController {
     remove(id, userId, userRole) {
         return this.coursesService.remove(id, userId, userRole);
     }
+    findMyCourses(userId, page = 1, limit = 10) {
+        return this.coursesService.findMyCourses(userId, page, limit);
+    }
 };
 exports.CoursesController = CoursesController;
 __decorate([
@@ -107,6 +110,19 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], CoursesController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Get)('me/enrolled'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Get my enrolled courses' }),
+    (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(1, (0, common_1.Query)('page', new common_1.ParseIntPipe({ optional: true }))),
+    __param(2, (0, common_1.Query)('limit', new common_1.ParseIntPipe({ optional: true }))),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", void 0)
+], CoursesController.prototype, "findMyCourses", null);
 exports.CoursesController = CoursesController = __decorate([
     (0, swagger_1.ApiTags)('Courses'),
     (0, common_1.Controller)('api/courses'),
