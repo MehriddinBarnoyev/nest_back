@@ -6,7 +6,10 @@ on:
 
 jobs:
   deploy:
+    # faqat commit message ichida "deploy service" bo'lsa ishga tushadi
+    if: contains(github.event.head_commit.message, 'deploy service')
     runs-on: ubuntu-latest
+
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
