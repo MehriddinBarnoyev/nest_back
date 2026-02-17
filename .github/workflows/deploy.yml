@@ -3,11 +3,11 @@ name: Deploy NestJS (PM2)
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   deploy:
-    # faqat commit message ichida "deploy service" bo'lsa ishga tushadi
-    if: contains(github.event.head_commit.message, 'deploy service')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'deploy service')
     runs-on: ubuntu-latest
 
     steps:
@@ -19,3 +19,40 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             /home/deploy/deploy.sh
+
+      - name: Notify Telegram (success)
+        if: success()
+        env:
+          BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+          THREAD_ID: ${{ secrets.TG_THREAD_ID }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          MSG: ${{ github.event.head_commit.message }}
+        run: |
+          TEXT="✅ Deploy SUCCESS%0ARepo: $REPO%0ABy: $ACTOR%0ASHA: ${SHA:0:7}%0AMsg: $MSG"
+          URL="https://api.telegram.org/bot$BOT_TOKEN/sendMessage"
+          if [ -n "${THREAD_ID:-}" ]; then
+            curl -s -X POST "$URL" -d "chat_id=$CHAT_ID" -d "message_thread_id=$THREAD_ID" -d "text=$TEXT" -d "disable_web_page_preview=1" >/dev/null
+          else
+            curl -s -X POST "$URL" -d "chat_id=$CHAT_ID" -d "text=$TEXT" -d "disable_web_page_preview=1" >/dev/null
+          fi
+
+      - name: Notify Telegram (failure)
+        if: failure()
+        env:
+          BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+          THREAD_ID: ${{ secrets.TG_THREAD_ID }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          TEXT="❌ Deploy FAILED%0ARepo: $REPO%0ABy: $ACTOR%0ASHA: ${SHA:0:7}%0AActions: https://github.com/$REPO/actions/runs/${{ github.run_id }}"
+          URL="https://api.telegram.org/bot$BOT_TOKEN/sendMessage"
+          if [ -n "${THREAD_ID:-}" ]; then
+            curl -s -X POST "$URL" -d "chat_id=$CHAT_ID" -d "message_thread_id=$THREAD_ID" -d "text=$TEXT" -d "disable_web_page_preview=1" >/dev/null
+          else
+            curl -s -X POST "$URL" -d "chat_id=$CHAT_ID" -d "text=$TEXT" -d "disable_web_page_preview=1" >/dev/null
+          fi
