@@ -62,20 +62,32 @@ let AuthService = class AuthService {
             throw new common_1.ConflictException('User with this email already exists');
         }
         const passwordHash = await bcrypt.hash(dto.password, 10);
-        const user = await this.prisma.user.create({
-            data: {
-                email: dto.email,
-                passwordHash,
-                fullName: dto.fullName,
-                role: dto.role,
-            },
-            select: {
-                id: true,
-                email: true,
-                role: true,
-                fullName: true,
-                isVerified: true,
-            },
+        const user = await this.prisma.$transaction(async (tx) => {
+            const newUser = await tx.user.create({
+                data: {
+                    email: dto.email,
+                    passwordHash,
+                    fullName: dto.fullName,
+                    role: dto.role,
+                    isVerified: true,
+                },
+                select: {
+                    id: true,
+                    email: true,
+                    role: true,
+                    fullName: true,
+                    isVerified: true,
+                },
+            });
+            if (dto.role === 'CREATOR') {
+                await tx.creatorProfile.create({
+                    data: {
+                        userId: newUser.id,
+                        displayName: dto.fullName || dto.email.split('@')[0],
+                    },
+                });
+            }
+            return newUser;
         });
         const token = this.generateToken(user);
         return { token, user };

@@ -7,14 +7,18 @@ import {
     Param,
     Body,
     ParseUUIDPipe,
+    Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { LessonsService } from './lessons.service';
 import { CreateLessonDto } from './dto/create-lesson.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { UserRole } from '@prisma/client';
+import { Public } from '../common/decorators/public.decorator';
+
+
 
 @ApiTags('Lessons')
 @ApiBearerAuth()
@@ -63,4 +67,15 @@ export class LessonsController {
     ) {
         return this.lessonsService.remove(id, userId, userRole);
     }
+
+    @Public()
+    @Get('public/lessons/:id')
+    @ApiOperation({ summary: 'Get a lesson (public access with entitlement check)' })
+    findOnePublic(
+        @Param('id', ParseUUIDPipe) id: string,
+        @CurrentUser('id') userId: string,
+    ) {
+        return this.lessonsService.findOnePublic(id, userId);
+    }
 }
+

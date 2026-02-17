@@ -20,6 +20,9 @@ const courses_module_1 = require("./courses/courses.module");
 const sections_module_1 = require("./sections/sections.module");
 const lessons_module_1 = require("./lessons/lessons.module");
 const videos_module_1 = require("./videos/videos.module");
+const access_requests_module_1 = require("./access-requests/access-requests.module");
+const invoices_module_1 = require("./invoices/invoices.module");
+const payments_module_1 = require("./payments/payments.module");
 const health_controller_1 = require("./health.controller");
 const env_validation_1 = require("./config/env.validation");
 let AppModule = class AppModule {
@@ -44,6 +47,9 @@ exports.AppModule = AppModule = __decorate([
             sections_module_1.SectionsModule,
             lessons_module_1.LessonsModule,
             videos_module_1.VideosModule,
+            access_requests_module_1.AccessRequestsModule,
+            invoices_module_1.InvoicesModule,
+            payments_module_1.PaymentsModule,
         ],
         controllers: [app_controller_1.AppController, health_controller_1.HealthController],
         providers: [app_service_1.AppService],

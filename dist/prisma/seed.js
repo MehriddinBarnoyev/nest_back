@@ -37,10 +37,10 @@ const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcrypt"));
 const prisma = new client_1.PrismaClient();
 async function main() {
-    const passwordHash = await bcrypt.hash('1236', 10);
+    const passwordHash = await bcrypt.hash('123456', 10);
     const admin = await prisma.user.upsert({
         where: { email: 'admin@platform.com' },
-        update: {},
+        update: { passwordHash },
         create: {
             email: 'admin@platform.com',
             passwordHash,
@@ -52,7 +52,7 @@ async function main() {
     console.log('Admin created:', admin.email);
     const creatorUser = await prisma.user.upsert({
         where: { email: 'creator@platform.com' },
-        update: {},
+        update: { passwordHash },
         create: {
             email: 'creator@platform.com',
             passwordHash,
@@ -74,7 +74,7 @@ async function main() {
     console.log('Creator profile created:', creatorProfile.displayName);
     const student = await prisma.user.upsert({
         where: { email: 'student@platform.com' },
-        update: {},
+        update: { passwordHash },
         create: {
             email: 'student@platform.com',
             passwordHash,
@@ -84,40 +84,108 @@ async function main() {
         },
     });
     console.log('Student created:', student.email);
-    const course = await prisma.course.upsert({
+    const publicCourse = await prisma.course.upsert({
+        where: { creatorId_slug: { creatorId: creatorProfile.id, slug: 'intro-to-web' } },
+        update: {},
+        create: {
+            creatorId: creatorProfile.id,
+            title: 'Intro to Web Development',
+            slug: 'intro-to-web',
+            description: 'Learn HTML, CSS and JS for free!',
+            status: client_1.CourseStatus.PUBLISHED,
+            visibility: client_1.CourseVisibility.PUBLIC,
+            priceType: 'FREE',
+            priceAmount: 0,
+            currency: 'UZS',
+            publishedAt: new Date(),
+        },
+    });
+    console.log('Public Course created:', publicCourse.title);
+    const privateCourse = await prisma.course.upsert({
         where: { creatorId_slug: { creatorId: creatorProfile.id, slug: 'nestjs-masterclass' } },
         update: {},
         create: {
             creatorId: creatorProfile.id,
-            title: 'NestJS Masterclass',
+            title: 'NestJS Masterclass (PRO)',
             slug: 'nestjs-masterclass',
-            description: 'Comprehensive guide to backend development with NestJS',
+            description: 'Advanced patterns and architecture with NestJS',
             status: client_1.CourseStatus.PUBLISHED,
+            visibility: client_1.CourseVisibility.PRIVATE,
             priceType: 'ONE_TIME',
-            priceAmount: 4900,
-            currency: 'USD',
+            priceAmount: 500000,
+            currency: 'UZS',
             publishedAt: new Date(),
         },
     });
-    console.log('Course created:', course.title);
-    const section = await prisma.courseSection.create({
-        data: {
-            courseId: course.id,
-            title: 'Introduction',
+    console.log('Private Course created:', privateCourse.title);
+    const section = await prisma.courseSection.upsert({
+        where: { courseId_orderNo: { courseId: privateCourse.id, orderNo: 1 } },
+        update: {},
+        create: {
+            courseId: privateCourse.id,
+            title: 'Architecture',
             orderNo: 1,
         },
     });
-    await prisma.lesson.create({
+    await prisma.lessonVideo.deleteMany({ where: { lesson: { courseId: privateCourse.id } } });
+    await prisma.lesson.deleteMany({ where: { courseId: privateCourse.id } });
+    await prisma.videoAsset.deleteMany({ where: { createdBy: creatorUser.id } });
+    const video1 = await prisma.videoAsset.create({
         data: {
-            courseId: course.id,
+            provider: 'YOUTUBE',
+            providerVideoId: 'dQw4w9WgXcQ',
+            title: 'Rick Roll',
+            status: 'READY',
+            createdBy: creatorUser.id,
+        }
+    });
+    const video2 = await prisma.videoAsset.create({
+        data: {
+            provider: 'YOUTUBE',
+            providerVideoId: 'f02mOEt11OQ',
+            title: 'NestJS Course',
+            status: 'READY',
+            createdBy: creatorUser.id,
+        }
+    });
+    const lesson = await prisma.lesson.create({
+        data: {
+            courseId: privateCourse.id,
             sectionId: section.id,
-            title: 'Welcome to the Course',
-            type: 'TEXT',
+            title: 'Microservices with NestJS',
+            type: 'VIDEO',
             orderNo: 1,
-            isPreview: true,
-            contentText: 'This is a sample introduction lesson.',
+            isPreview: false,
         },
     });
+    await prisma.lessonVideo.createMany({
+        data: [
+            { lessonId: lesson.id, videoAssetId: video1.id, orderNo: 0 },
+            { lessonId: lesson.id, videoAssetId: video2.id, orderNo: 1 },
+        ]
+    });
+    const request = await prisma.accessRequest.create({
+        data: {
+            userId: student.id,
+            courseId: privateCourse.id,
+            ownerId: creatorUser.id,
+            status: client_1.AccessRequestStatus.INVOICED,
+        }
+    });
+    await prisma.invoice.create({
+        data: {
+            accessRequestId: request.id,
+            courseId: privateCourse.id,
+            userId: student.id,
+            ownerId: creatorUser.id,
+            amount: 500000,
+            currency: 'UZS',
+            status: 'SENT',
+            issuedAt: new Date(),
+            note: 'Special discount for you!',
+        }
+    });
+    console.log('Sample Access Request and SENT Invoice created for student.');
     console.log('Seed completed successfully!');
 }
 main()

@@ -13,13 +13,14 @@ export class RegisterDto {
     @MinLength(6)
     password: string;
 
-    @ApiProperty({ example: 'John Doe', required: false })
+    @ApiProperty({ example: 'John Student', required: false })
     @IsString()
     @IsOptional()
     fullName?: string;
 
-    @ApiProperty({ enum: UserRole, example: UserRole.STUDENT, required: false })
+    @ApiProperty({ enum: UserRole, example: UserRole.STUDENT, description: 'Default is STUDENT', required: false })
     @IsEnum(UserRole)
     @IsOptional()
     role?: UserRole;
 }
+

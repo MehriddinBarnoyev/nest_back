@@ -23,26 +23,42 @@ export class AuthService {
 
         const passwordHash = await bcrypt.hash(dto.password, 10);
 
-        const user = await this.prisma.user.create({
-            data: {
-                email: dto.email,
-                passwordHash,
-                fullName: dto.fullName,
-                role: dto.role,
-            },
-            select: {
-                id: true,
-                email: true,
-                role: true,
-                fullName: true,
-                isVerified: true,
-            },
+        const user = await this.prisma.$transaction(async (tx) => {
+            const newUser = await tx.user.create({
+                data: {
+                    email: dto.email,
+                    passwordHash,
+                    fullName: dto.fullName,
+                    role: dto.role,
+                    isVerified: true, // Auto-verify for now to simplify testing
+                },
+                select: {
+                    id: true,
+                    email: true,
+                    role: true,
+                    fullName: true,
+                    isVerified: true,
+                },
+            });
+
+            // If user is a creator, create a profile automatically
+            if (dto.role === 'CREATOR') {
+                await tx.creatorProfile.create({
+                    data: {
+                        userId: newUser.id,
+                        displayName: dto.fullName || dto.email.split('@')[0],
+                    },
+                });
+            }
+
+            return newUser;
         });
 
         const token = this.generateToken(user);
 
         return { token, user };
     }
+
 
     async login(dto: LoginDto) {
         const user = await this.prisma.user.findUnique({

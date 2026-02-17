@@ -21,6 +21,7 @@ const update_lesson_dto_1 = require("./dto/update-lesson.dto");
 const roles_decorator_1 = require("../common/decorators/roles.decorator");
 const current_user_decorator_1 = require("../common/decorators/current-user.decorator");
 const client_1 = require("@prisma/client");
+const public_decorator_1 = require("../common/decorators/public.decorator");
 let LessonsController = class LessonsController {
     lessonsService;
     constructor(lessonsService) {
@@ -37,6 +38,9 @@ let LessonsController = class LessonsController {
     }
     remove(id, userId, userRole) {
         return this.lessonsService.remove(id, userId, userRole);
+    }
+    findOnePublic(id, userId) {
+        return this.lessonsService.findOnePublic(id, userId);
     }
 };
 exports.LessonsController = LessonsController;
@@ -84,6 +88,16 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], LessonsController.prototype, "remove", null);
+__decorate([
+    (0, public_decorator_1.Public)(),
+    (0, common_1.Get)('public/lessons/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get a lesson (public access with entitlement check)' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], LessonsController.prototype, "findOnePublic", null);
 exports.LessonsController = LessonsController = __decorate([
     (0, swagger_1.ApiTags)('Lessons'),
     (0, swagger_1.ApiBearerAuth)(),

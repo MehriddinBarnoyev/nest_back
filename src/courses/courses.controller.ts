@@ -80,6 +80,19 @@ export class CoursesController {
     ) {
         return this.coursesService.remove(id, userId, userRole);
     }
+
+    @Get('me/enrolled')
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Get my enrolled courses' })
+    @ApiQuery({ name: 'page', required: false, type: Number })
+    @ApiQuery({ name: 'limit', required: false, type: Number })
+    findMyCourses(
+        @CurrentUser('id') userId: string,
+        @Query('page', new ParseIntPipe({ optional: true })) page = 1,
+        @Query('limit', new ParseIntPipe({ optional: true })) limit = 10,
+    ) {
+        return this.coursesService.findMyCourses(userId, page, limit);
+    }
 }
 
 @ApiTags('Public')

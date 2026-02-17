@@ -18,12 +18,12 @@ class LoginDto {
 }
 exports.LoginDto = LoginDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'user@example.com' }),
+    (0, swagger_1.ApiProperty)({ example: 'admin@platform.com', description: 'User email (admin@platform.com, creator@platform.com, student@platform.com)' }),
     (0, class_validator_1.IsEmail)(),
     __metadata("design:type", String)
 ], LoginDto.prototype, "email", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'strongPassword123' }),
+    (0, swagger_1.ApiProperty)({ example: '123456', description: 'User password (standard is 123456)' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)

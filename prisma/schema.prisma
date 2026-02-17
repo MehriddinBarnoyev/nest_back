@@ -52,6 +52,46 @@ enum VideoStatus {
   @@map("video_status")
 }
 
+enum CourseVisibility {
+  PUBLIC
+  PRIVATE
+  @@map("course_visibility")
+}
+
+enum AccessRequestStatus {
+  PENDING
+  INVOICED
+  REJECTED
+  CANCELED
+  EXPIRED
+  APPROVED
+  @@map("access_request_status")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  VOID
+  EXPIRED
+  @@map("invoice_status")
+}
+
+enum PaymentProvider {
+  PAYME
+  CLICK
+  MOCK
+  @@map("payment_provider")
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  @@map("payment_status")
+}
+
+
 model User {
   id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   role         UserRole  @default(STUDENT)
@@ -67,11 +107,17 @@ model User {
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime  @default(now()) @map("updated_at") @db.Timestamptz
   creatorProfile CreatorProfile?
+  accessRequests AccessRequest[]
+  invoices       Invoice[]
+  payments       Payment[]
+  entitlements   Entitlement[]
+  lessonProgress LessonProgress[]
 
   @@map("users")
   @@index([role])
   @@index([createdAt])
 }
+
 
 model CreatorProfile {
   id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -108,7 +154,7 @@ model VideoAsset {
   orgId           String?       @map("org_id") @db.Uuid
   createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime      @default(now()) @map("updated_at") @db.Timestamptz
-  lessons         Lesson[]
+  lessons         LessonVideo[]
 
   @@unique([provider, providerVideoId])
   @@map("video_assets")
@@ -126,6 +172,7 @@ model Course {
   description        String?
   coverFileId        String?        @map("cover_file_id") @db.Uuid
   status             CourseStatus   @default(DRAFT)
+  visibility         CourseVisibility @default(PUBLIC)
   language           String?
   level              String?
   tags               String[]       @default([])
@@ -139,6 +186,9 @@ model Course {
   updatedAt          DateTime       @default(now()) @map("updated_at") @db.Timestamptz
   sections           CourseSection[]
   lessons            Lesson[]
+  accessRequests     AccessRequest[]
+  invoices           Invoice[]
+  entitlements       Entitlement[]
 
   @@unique([creatorId, slug])
   @@map("courses")
@@ -146,6 +196,7 @@ model Course {
   @@index([status])
   @@index([orgId])
 }
+
 
 model CourseSection {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -163,28 +214,129 @@ model CourseSection {
 }
 
 model Lesson {
-  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  courseId     String        @map("course_id") @db.Uuid
-  course       Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  sectionId    String?       @map("section_id") @db.Uuid
-  section      CourseSection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId     String           @map("course_id") @db.Uuid
+  course       Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  sectionId    String?          @map("section_id") @db.Uuid
+  section      CourseSection?   @relation(fields: [sectionId], references: [id], onDelete: SetNull)
   title        String
   type         LessonType
-  orderNo      Int           @map("order_no")
-  isPreview    Boolean       @default(false) @map("is_preview")
-  contentText  String?       @map("content_text")
-  embedUrl     String?       @map("embed_url")
-  fileId       String?       @map("file_id") @db.Uuid
-  videoAssetId String?       @map("video_asset_id") @db.Uuid
-  videoAsset   VideoAsset?   @relation(fields: [videoAssetId], references: [id], onDelete: SetNull)
-  durationSec  Int?          @map("duration_sec")
-  meta         Json          @default("{}")
-  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime      @default(now()) @map("updated_at") @db.Timestamptz
+  orderNo      Int              @map("order_no")
+  isPreview    Boolean          @default(false) @map("is_preview")
+  contentText  String?          @map("content_text")
+  embedUrl     String?          @map("embed_url")
+  fileId       String?          @map("file_id") @db.Uuid
+  durationSec  Int?             @map("duration_sec")
+  meta         Json             @default("{}")
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime         @default(now()) @map("updated_at") @db.Timestamptz
+  videos       LessonVideo[]
+  progress     LessonProgress[]
 
   @@unique([courseId, orderNo])
   @@map("lessons")
   @@index([courseId])
   @@index([sectionId])
-  @@index([videoAssetId])
+}
+
+model LessonVideo {
+  lessonId     String     @map("lesson_id") @db.Uuid
+  videoAssetId String     @map("video_asset_id") @db.Uuid
+  orderNo      Int        @default(0) @map("order_no")
+  lesson       Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  videoAsset   VideoAsset @relation(fields: [videoAssetId], references: [id], onDelete: Cascade)
+
+  @@id([lessonId, videoAssetId])
+  @@map("lesson_videos")
+}
+
+model AccessRequest {
+  id        String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId  String              @map("course_id") @db.Uuid
+  course    Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId    String              @map("user_id") @db.Uuid
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ownerId   String              @map("owner_id") @db.Uuid
+  status    AccessRequestStatus @default(PENDING)
+  createdAt DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime            @default(now()) @map("updated_at") @db.Timestamptz
+  invoice   Invoice?
+
+  @@map("access_requests")
+  @@index([status, ownerId])
+  @@index([userId, courseId])
+}
+
+model Invoice {
+  id                 String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  accessRequestId    String?       @unique @map("access_request_id") @db.Uuid
+  accessRequest      AccessRequest? @relation(fields: [accessRequestId], references: [id], onDelete: SetNull)
+  courseId           String        @map("course_id") @db.Uuid
+  course             Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId             String        @map("user_id") @db.Uuid
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ownerId            String        @map("owner_id") @db.Uuid
+  amount             Int
+  currency           String        @default("UZS")
+  accessDurationDays Int?          @map("access_duration_days")
+  note               String?
+  status             InvoiceStatus @default(DRAFT)
+  issuedAt           DateTime?     @map("issued_at") @db.Timestamptz
+  expiresAt          DateTime?     @map("expires_at") @db.Timestamptz
+  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime      @default(now()) @map("updated_at") @db.Timestamptz
+  payments           Payment[]
+
+  @@map("invoices")
+  @@index([status, ownerId])
+  @@index([userId])
+}
+
+model Payment {
+  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider    PaymentProvider
+  providerRef String?         @unique @map("provider_ref")
+  status      PaymentStatus   @default(PENDING)
+  amount      Int
+  currency    String          @default("UZS")
+  invoiceId   String          @map("invoice_id") @db.Uuid
+  invoice     Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  userId      String          @map("user_id") @db.Uuid
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ownerId     String          @map("owner_id") @db.Uuid
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime        @default(now()) @map("updated_at") @db.Timestamptz
+
+  @@map("payments")
+  @@index([status, ownerId])
+}
+
+model Entitlement {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String    @map("course_id") @db.Uuid
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  source      String    @default("PAYMENT")
+  sourceId    String?   @map("source_id")
+  activeUntil DateTime? @map("active_until") @db.Timestamptz
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@unique([userId, courseId])
+  @@map("entitlements")
+  @@index([userId, courseId])
+}
+
+model LessonProgress {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId       String    @map("lesson_id") @db.Uuid
+  lesson         Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lastPositionSec Int      @default(0) @map("last_position_sec")
+  completedAt    DateTime? @map("completed_at") @db.Timestamptz
+  updatedAt      DateTime  @default(now()) @map("updated_at") @db.Timestamptz
+
+  @@unique([userId, lessonId])
+  @@map("lesson_progress")
 }

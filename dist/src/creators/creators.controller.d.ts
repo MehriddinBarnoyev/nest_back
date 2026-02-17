@@ -19,8 +19,8 @@ export declare class CreatorsController {
     }>;
     getMyProfile(userId: string): Promise<{
         user: {
-            email: string;
             role: import("@prisma/client").$Enums.UserRole;
+            email: string;
             fullName: string | null;
         };
     } & {

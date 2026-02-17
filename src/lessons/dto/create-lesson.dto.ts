@@ -33,10 +33,10 @@ export class CreateLessonDto {
     @IsOptional()
     embedUrl?: string;
 
-    @ApiProperty({ example: 'uuid-of-video-asset', required: false })
-    @IsUUID()
+    @ApiProperty({ example: ['uuid-1', 'uuid-2'], required: false, isArray: true })
+    @IsUUID('all', { each: true })
     @IsOptional()
-    videoAssetId?: string;
+    videoAssetIds?: string[];
 
     @ApiProperty({ example: 600, required: false })
     @IsInt()

@@ -30,13 +30,51 @@ let LessonsService = class LessonsService {
         }
         return course;
     }
+    async checkVideoOwnership(videoAssetIds, userId, userRole) {
+        if (userRole === client_1.UserRole.ADMIN)
+            return;
+        const videos = await this.prisma.videoAsset.findMany({
+            where: { id: { in: videoAssetIds } },
+            select: { id: true, createdBy: true },
+        });
+        if (videos.length !== videoAssetIds.length) {
+            throw new common_1.NotFoundException('Some video assets were not found');
+        }
+        for (const video of videos) {
+            if (video.createdBy !== userId) {
+                throw new common_1.ForbiddenException(`You do not own video asset ${video.id}`);
+            }
+        }
+    }
     async create(courseId, userId, userRole, dto) {
         await this.checkCourseOwner(courseId, userId, userRole);
-        return await this.prisma.lesson.create({
-            data: {
-                courseId,
-                ...dto,
-            },
+        const { videoAssetIds, ...data } = dto;
+        if (dto.type === client_1.LessonType.VIDEO && (!videoAssetIds || videoAssetIds.length === 0)) {
+            throw new common_1.BadRequestException('Video type lessons must have at least one video asset');
+        }
+        if (videoAssetIds && videoAssetIds.length > 0) {
+            await this.checkVideoOwnership(videoAssetIds, userId, userRole);
+        }
+        return await this.prisma.$transaction(async (tx) => {
+            const lesson = await tx.lesson.create({
+                data: {
+                    courseId,
+                    ...data,
+                },
+            });
+            if (videoAssetIds && videoAssetIds.length > 0) {
+                await tx.lessonVideo.createMany({
+                    data: videoAssetIds.map((id, index) => ({
+                        lessonId: lesson.id,
+                        videoAssetId: id,
+                        orderNo: index,
+                    })),
+                });
+            }
+            return tx.lesson.findUnique({
+                where: { id: lesson.id },
+                include: { videos: { include: { videoAsset: true } } },
+            });
         });
     }
     async findAll(courseId) {
@@ -45,7 +83,10 @@ let LessonsService = class LessonsService {
             orderBy: { orderNo: 'asc' },
             include: {
                 section: true,
-                videoAsset: true,
+                videos: {
+                    include: { videoAsset: true },
+                    orderBy: { orderNo: 'asc' },
+                },
             },
         });
     }
@@ -54,9 +95,34 @@ let LessonsService = class LessonsService {
         if (!lesson)
             throw new common_1.NotFoundException('Lesson not found');
         await this.checkCourseOwner(lesson.courseId, userId, userRole);
-        return await this.prisma.lesson.update({
-            where: { id },
-            data: dto,
+        const { videoAssetIds, ...data } = dto;
+        if (videoAssetIds) {
+            if (dto.type === client_1.LessonType.VIDEO && videoAssetIds.length === 0) {
+                throw new common_1.BadRequestException('Video type lessons must have at least one video asset');
+            }
+            await this.checkVideoOwnership(videoAssetIds, userId, userRole);
+        }
+        return await this.prisma.$transaction(async (tx) => {
+            await tx.lesson.update({
+                where: { id },
+                data: data,
+            });
+            if (videoAssetIds) {
+                await tx.lessonVideo.deleteMany({ where: { lessonId: id } });
+                if (videoAssetIds.length > 0) {
+                    await tx.lessonVideo.createMany({
+                        data: videoAssetIds.map((vid, index) => ({
+                            lessonId: id,
+                            videoAssetId: vid,
+                            orderNo: index,
+                        })),
+                    });
+                }
+            }
+            return tx.lesson.findUnique({
+                where: { id },
+                include: { videos: { include: { videoAsset: true } } },
+            });
         });
     }
     async remove(id, userId, userRole) {
@@ -66,6 +132,57 @@ let LessonsService = class LessonsService {
         await this.checkCourseOwner(lesson.courseId, userId, userRole);
         await this.prisma.lesson.delete({ where: { id } });
         return { success: true };
+    }
+    async findOnePublic(id, userId) {
+        const lesson = await this.prisma.lesson.findUnique({
+            where: { id },
+            include: {
+                course: true,
+                videos: {
+                    include: { videoAsset: true },
+                    orderBy: { orderNo: 'asc' },
+                },
+            },
+        });
+        if (!lesson)
+            throw new common_1.NotFoundException('Lesson not found');
+        if (lesson.isPreview)
+            return lesson;
+        const hasAccess = await this.canAccessCourse(userId, lesson.courseId);
+        if (!hasAccess) {
+            if (!userId) {
+                throw new common_1.UnauthorizedException('You must be logged in to access this lesson');
+            }
+            else {
+                throw new common_1.ForbiddenException('You do not have access to this course. Please purchase or request access.');
+            }
+        }
+        return lesson;
+    }
+    async canAccessCourse(userId, courseId) {
+        const course = await this.prisma.course.findUnique({
+            where: { id: courseId },
+        });
+        if (!course)
+            return false;
+        if (course.visibility === 'PUBLIC')
+            return true;
+        if (!userId)
+            return false;
+        const entitlement = await this.prisma.entitlement.findUnique({
+            where: {
+                userId_courseId: {
+                    userId,
+                    courseId,
+                },
+            },
+        });
+        if (!entitlement)
+            return false;
+        if (entitlement.activeUntil && entitlement.activeUntil < new Date()) {
+            return false;
+        }
+        return true;
     }
 };
 exports.LessonsService = LessonsService;

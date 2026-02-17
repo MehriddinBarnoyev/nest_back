@@ -6,7 +6,7 @@ export declare class CreateLessonDto {
     isPreview?: boolean;
     contentText?: string;
     embedUrl?: string;
-    videoAssetId?: string;
+    videoAssetIds?: string[];
     durationSec?: number;
     sectionId?: string;
 }

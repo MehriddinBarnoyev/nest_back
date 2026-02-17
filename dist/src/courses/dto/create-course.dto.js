@@ -12,10 +12,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateCourseDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
+const client_1 = require("@prisma/client");
 class CreateCourseDto {
     title;
     slug;
     description;
+    status;
+    visibility;
     priceType;
     priceAmount;
     currency;
@@ -40,6 +43,18 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateCourseDto.prototype, "description", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: client_1.CourseStatus.DRAFT, enum: client_1.CourseStatus, required: false }),
+    (0, class_validator_1.IsEnum)(client_1.CourseStatus),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateCourseDto.prototype, "status", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: client_1.CourseVisibility.PUBLIC, enum: client_1.CourseVisibility, required: false }),
+    (0, class_validator_1.IsEnum)(client_1.CourseVisibility),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateCourseDto.prototype, "visibility", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 'ONE_TIME', enum: ['ONE_TIME', 'SUBSCRIPTION', 'FREE'] }),
     (0, class_validator_1.IsString)(),

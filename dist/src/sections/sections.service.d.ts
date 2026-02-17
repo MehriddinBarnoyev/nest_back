@@ -9,9 +9,9 @@ export declare class SectionsService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        courseId: string;
         title: string;
         orderNo: number;
-        courseId: string;
     }>;
     findAll(courseId: string): Promise<({
         lessons: {
@@ -19,33 +19,32 @@ export declare class SectionsService {
             meta: import("@prisma/client/runtime/library").JsonValue;
             createdAt: Date;
             updatedAt: Date;
+            courseId: string;
             title: string;
             orderNo: number;
-            courseId: string;
+            sectionId: string | null;
             type: import("@prisma/client").$Enums.LessonType;
             isPreview: boolean;
             contentText: string | null;
             embedUrl: string | null;
             fileId: string | null;
             durationSec: number | null;
-            sectionId: string | null;
-            videoAssetId: string | null;
         }[];
     } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        courseId: string;
         title: string;
         orderNo: number;
-        courseId: string;
     })[]>;
     update(id: string, userId: string, userRole: string, dto: UpdateSectionDto): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        courseId: string;
         title: string;
         orderNo: number;
-        courseId: string;
     }>;
     remove(id: string, userId: string, userRole: string): Promise<{
         success: boolean;

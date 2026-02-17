@@ -20,7 +20,7 @@ class CreateLessonDto {
     isPreview;
     contentText;
     embedUrl;
-    videoAssetId;
+    videoAssetIds;
     durationSec;
     sectionId;
 }
@@ -62,11 +62,11 @@ __decorate([
     __metadata("design:type", String)
 ], CreateLessonDto.prototype, "embedUrl", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'uuid-of-video-asset', required: false }),
-    (0, class_validator_1.IsUUID)(),
+    (0, swagger_1.ApiProperty)({ example: ['uuid-1', 'uuid-2'], required: false, isArray: true }),
+    (0, class_validator_1.IsUUID)('all', { each: true }),
     (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], CreateLessonDto.prototype, "videoAssetId", void 0);
+    __metadata("design:type", Array)
+], CreateLessonDto.prototype, "videoAssetIds", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 600, required: false }),
     (0, class_validator_1.IsInt)(),
