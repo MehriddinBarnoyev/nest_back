@@ -2,6 +2,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateVideoDto } from './dto/create-video.dto';
 import { UpdateVideoDto } from './dto/update-video.dto';
 import { YoutubeService } from './youtube.service';
+import { UserRole } from '@prisma/client';
 export declare class VideosService {
     private prisma;
     private youtubeService;
@@ -23,7 +24,7 @@ export declare class VideosService {
         playbackMeta: import("@prisma/client/runtime/library").JsonValue;
         uploadMeta: import("@prisma/client/runtime/library").JsonValue;
     }>;
-    findAll(page?: number, limit?: number, q?: string): Promise<{
+    findAll(userId: string, userRole: UserRole, page?: number, limit?: number, q?: string): Promise<{
         results: {
             id: string;
             createdAt: Date;
@@ -85,7 +86,7 @@ export declare class VideosService {
     remove(id: string): Promise<{
         success: boolean;
     }>;
-    ingestYoutube(url: string, description: string | undefined, userId: string): Promise<{
+    ingestYoutube(url: string, title: string | undefined, description: string | undefined, userId: string): Promise<{
         success: boolean;
         data: {
             id: string;

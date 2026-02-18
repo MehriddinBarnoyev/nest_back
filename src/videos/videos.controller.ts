@@ -56,16 +56,33 @@ export class VideosController {
     }
 
     @Get()
-    @ApiOperation({ summary: 'Get all video assets' })
+    @ApiOperation({ summary: 'Get video assets (Creator: own, Admin: all)' })
     @ApiQuery({ name: 'page', required: false, type: Number })
     @ApiQuery({ name: 'limit', required: false, type: Number })
     @ApiQuery({ name: 'q', required: false, type: String })
     findAll(
+        @CurrentUser('id') userId: string,
+        @CurrentUser('role') userRole: UserRole,
         @Query('page', new ParseIntPipe({ optional: true })) page = 1,
         @Query('limit', new ParseIntPipe({ optional: true })) limit = 10,
         @Query('q') q?: string,
     ) {
-        return this.videosService.findAll(page, limit, q);
+        return this.videosService.findAll(userId, userRole, page, limit, q);
+    }
+
+    @Get('me')
+    @ApiOperation({ summary: 'Get videos created by current user' })
+    @ApiQuery({ name: 'page', required: false, type: Number })
+    @ApiQuery({ name: 'limit', required: false, type: Number })
+    @ApiQuery({ name: 'q', required: false, type: String })
+    findMyVideos(
+        @CurrentUser('id') userId: string,
+        @CurrentUser('role') userRole: UserRole,
+        @Query('page', new ParseIntPipe({ optional: true })) page = 1,
+        @Query('limit', new ParseIntPipe({ optional: true })) limit = 10,
+        @Query('q') q?: string,
+    ) {
+        return this.videosService.findAll(userId, userRole, page, limit, q);
     }
 
     @Get(':id')
@@ -92,7 +109,7 @@ export class VideosController {
         @Body() dto: IngestYoutubeDto,
         @CurrentUser('id') userId: string,
     ) {
-        return this.videosService.ingestYoutube(dto.url, dto.description, userId);
+        return this.videosService.ingestYoutube(dto.url, dto.title, dto.description, userId);
     }
 
     @Delete(':id')

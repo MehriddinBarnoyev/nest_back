@@ -40,8 +40,11 @@ let VideosController = class VideosController {
     create(dto, userId) {
         return this.videosService.create(dto, userId);
     }
-    findAll(page = 1, limit = 10, q) {
-        return this.videosService.findAll(page, limit, q);
+    findAll(userId, userRole, page = 1, limit = 10, q) {
+        return this.videosService.findAll(userId, userRole, page, limit, q);
+    }
+    findMyVideos(userId, userRole, page = 1, limit = 10, q) {
+        return this.videosService.findAll(userId, userRole, page, limit, q);
     }
     findOne(id) {
         return this.videosService.findOne(id);
@@ -50,7 +53,7 @@ let VideosController = class VideosController {
         return this.videosService.update(id, dto);
     }
     ingestYoutube(dto, userId) {
-        return this.videosService.ingestYoutube(dto.url, dto.description, userId);
+        return this.videosService.ingestYoutube(dto.url, dto.title, dto.description, userId);
     }
     remove(id) {
         return this.videosService.remove(id);
@@ -90,17 +93,34 @@ __decorate([
 ], VideosController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Get all video assets' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Get video assets (Creator: own, Admin: all)' }),
     (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
     (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
     (0, swagger_1.ApiQuery)({ name: 'q', required: false, type: String }),
-    __param(0, (0, common_1.Query)('page', new common_1.ParseIntPipe({ optional: true }))),
-    __param(1, (0, common_1.Query)('limit', new common_1.ParseIntPipe({ optional: true }))),
-    __param(2, (0, common_1.Query)('q')),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)('role')),
+    __param(2, (0, common_1.Query)('page', new common_1.ParseIntPipe({ optional: true }))),
+    __param(3, (0, common_1.Query)('limit', new common_1.ParseIntPipe({ optional: true }))),
+    __param(4, (0, common_1.Query)('q')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object, String]),
+    __metadata("design:paramtypes", [String, String, Object, Object, String]),
     __metadata("design:returntype", void 0)
 ], VideosController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('me'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get videos created by current user' }),
+    (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
+    (0, swagger_1.ApiQuery)({ name: 'q', required: false, type: String }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)('role')),
+    __param(2, (0, common_1.Query)('page', new common_1.ParseIntPipe({ optional: true }))),
+    __param(3, (0, common_1.Query)('limit', new common_1.ParseIntPipe({ optional: true }))),
+    __param(4, (0, common_1.Query)('q')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object, Object, String]),
+    __metadata("design:returntype", void 0)
+], VideosController.prototype, "findMyVideos", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Get video asset by ID' }),

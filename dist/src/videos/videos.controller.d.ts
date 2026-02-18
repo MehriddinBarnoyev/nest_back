@@ -4,6 +4,7 @@ import { CreateVideoDto } from './dto/create-video.dto';
 import { UpdateVideoDto } from './dto/update-video.dto';
 import { GetUploadCredentialsDto } from './dto/upload-credentials.dto';
 import { IngestYoutubeDto } from './dto/ingest-youtube.dto';
+import { UserRole } from '@prisma/client';
 export declare class VideosController {
     private videosService;
     private vdoCipherService;
@@ -27,7 +28,32 @@ export declare class VideosController {
         playbackMeta: import("@prisma/client/runtime/library").JsonValue;
         uploadMeta: import("@prisma/client/runtime/library").JsonValue;
     }>;
-    findAll(page?: number, limit?: number, q?: string): Promise<{
+    findAll(userId: string, userRole: UserRole, page?: number, limit?: number, q?: string): Promise<{
+        results: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            status: import("@prisma/client").$Enums.VideoStatus;
+            orgId: string | null;
+            title: string | null;
+            description: string | null;
+            durationSec: number | null;
+            createdBy: string | null;
+            provider: import("@prisma/client").$Enums.VideoProvider;
+            providerVideoId: string;
+            sourceUrl: string | null;
+            sizeBytes: bigint | null;
+            playbackMeta: import("@prisma/client/runtime/library").JsonValue;
+            uploadMeta: import("@prisma/client/runtime/library").JsonValue;
+        }[];
+        meta: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
+    }>;
+    findMyVideos(userId: string, userRole: UserRole, page?: number, limit?: number, q?: string): Promise<{
         results: {
             id: string;
             createdAt: Date;

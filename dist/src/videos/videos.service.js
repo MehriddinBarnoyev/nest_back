@@ -29,16 +29,18 @@ let VideosService = class VideosService {
             },
         });
     }
-    async findAll(page = 1, limit = 10, q) {
+    async findAll(userId, userRole, page = 1, limit = 10, q) {
         const skip = (page - 1) * limit;
-        const where = q
-            ? {
-                OR: [
-                    { title: { contains: q, mode: 'insensitive' } },
-                    { providerVideoId: { contains: q, mode: 'insensitive' } },
-                ],
-            }
-            : {};
+        const where = {};
+        if (userRole !== client_1.UserRole.ADMIN) {
+            where.createdBy = userId;
+        }
+        if (q) {
+            where.OR = [
+                { title: { contains: q, mode: 'insensitive' } },
+                { providerVideoId: { contains: q, mode: 'insensitive' } },
+            ];
+        }
         const [results, total] = await Promise.all([
             this.prisma.videoAsset.findMany({
                 where,
@@ -87,7 +89,7 @@ let VideosService = class VideosService {
             throw new common_1.NotFoundException('Video asset not found');
         }
     }
-    async ingestYoutube(url, description, userId) {
+    async ingestYoutube(url, title, description, userId) {
         const videoId = this.youtubeService.parseVideoId(url);
         const embedUrl = this.youtubeService.toEmbedUrl(videoId);
         const videoAsset = await this.prisma.videoAsset.upsert({
@@ -98,6 +100,7 @@ let VideosService = class VideosService {
                 },
             },
             update: {
+                title: title || `YouTube Video ${videoId}`,
                 description: description || null,
                 sourceUrl: url,
                 status: client_1.VideoStatus.READY,
@@ -108,6 +111,7 @@ let VideosService = class VideosService {
                 updatedAt: new Date(),
             },
             create: {
+                title: title || `YouTube Video ${videoId}`,
                 provider: client_1.VideoProvider.YOUTUBE,
                 providerVideoId: videoId,
                 description: description || null,

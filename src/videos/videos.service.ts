@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateVideoDto } from './dto/create-video.dto';
 import { UpdateVideoDto } from './dto/update-video.dto';
 import { YoutubeService } from './youtube.service';
-import { VideoProvider, VideoStatus } from '@prisma/client';
+import { VideoProvider, VideoStatus, UserRole } from '@prisma/client';
 
 @Injectable()
 export class VideosService {
@@ -21,16 +21,20 @@ export class VideosService {
         });
     }
 
-    async findAll(page = 1, limit = 10, q?: string) {
+    async findAll(userId: string, userRole: UserRole, page = 1, limit = 10, q?: string) {
         const skip = (page - 1) * limit;
-        const where = q
-            ? {
-                OR: [
-                    { title: { contains: q, mode: 'insensitive' as const } },
-                    { providerVideoId: { contains: q, mode: 'insensitive' as const } },
-                ],
-            }
-            : {};
+
+        const where: any = {};
+        if (userRole !== UserRole.ADMIN) {
+            where.createdBy = userId;
+        }
+
+        if (q) {
+            where.OR = [
+                { title: { contains: q, mode: 'insensitive' as const } },
+                { providerVideoId: { contains: q, mode: 'insensitive' as const } },
+            ];
+        }
 
         const [results, total] = await Promise.all([
             this.prisma.videoAsset.findMany({
@@ -89,7 +93,7 @@ export class VideosService {
      * Ingest YouTube video and save to database
      * No API calls - frontend handles preview via iframe
      */
-    async ingestYoutube(url: string, description: string | undefined, userId: string) {
+    async ingestYoutube(url: string, title: string | undefined, description: string | undefined, userId: string) {
         const videoId = this.youtubeService.parseVideoId(url);
         const embedUrl = this.youtubeService.toEmbedUrl(videoId);
 
@@ -102,6 +106,7 @@ export class VideosService {
                 },
             },
             update: {
+                title: title || `YouTube Video ${videoId}`,
                 description: description || null,
                 sourceUrl: url,
                 status: VideoStatus.READY,
@@ -112,6 +117,7 @@ export class VideosService {
                 updatedAt: new Date(),
             },
             create: {
+                title: title || `YouTube Video ${videoId}`,
                 provider: VideoProvider.YOUTUBE,
                 providerVideoId: videoId,
                 description: description || null,

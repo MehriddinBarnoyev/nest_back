@@ -18,4 +18,13 @@ export class IngestYoutubeDto {
     @IsString()
     @IsOptional()
     description?: string;
+
+    @ApiProperty({
+        example: 'Introduction to NestJS',
+        description: 'User-provided title for the video',
+        required: false,
+    })
+    @IsString()
+    @IsOptional()
+    title?: string;
 }

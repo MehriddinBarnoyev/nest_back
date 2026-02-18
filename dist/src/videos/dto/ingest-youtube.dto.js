@@ -15,6 +15,7 @@ const class_validator_1 = require("class-validator");
 class IngestYoutubeDto {
     url;
     description;
+    title;
 }
 exports.IngestYoutubeDto = IngestYoutubeDto;
 __decorate([
@@ -36,4 +37,14 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], IngestYoutubeDto.prototype, "description", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        example: 'Introduction to NestJS',
+        description: 'User-provided title for the video',
+        required: false,
+    }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], IngestYoutubeDto.prototype, "title", void 0);
 //# sourceMappingURL=ingest-youtube.dto.js.map
