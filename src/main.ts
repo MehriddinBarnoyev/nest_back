@@ -35,7 +35,6 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  // Swagger Documentation
   const config = new DocumentBuilder()
     .setTitle('Creator Monetization Platform API')
     .setDescription('The Creator Monetization Platform API description')
